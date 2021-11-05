@@ -40,9 +40,46 @@ casos_ <-
 fallecidos <-
   rast("/vsicurl/https://marcelocubero.github.io/capas_proyecto/fallecidos.tif")
 
+
+lista_provincias <- unique(casos$provincia)
+lista_provincias <- sort(lista_provincias)
+lista_provincias <- c("Todas", lista_provincias)
+
+
+lista_canton <- unique(casos$canton)
+lista_canton <- sort(lista_canton)
+lista_canton <- c("Todas", lista_canton)
 ```
+
+
+
+
 Mapa y cuadro de datos
 =====================================
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+```{r}
+h3("Filtros") 
+
+h2("Provincias")
+selectInput(
+  inputId = "provincia",
+  label = "Provincia",
+  choices = lista_provincias,
+  selected = "Todas"
+)
+
+h2("Cantones")
+selectInput(
+  inputId = "canton",
+  label = "Cantón",
+  choices = lista_canton,
+  selected = "Todas"
+)
+
+```
+
 
 Row {data-height=650}
 -----------------------------------------------------------------------
@@ -141,7 +178,7 @@ Row {data-height=350}
 
 casos_ %>%
   select(Cantón= canton,Provincia= provincia, Casos_Activos= activos, Casos_Positivos= positivos) %>%
-datatable( casos_)
+  datatable( casos_)
 
 ```
 Casos positivos por cantón {data-orientation=rows}
