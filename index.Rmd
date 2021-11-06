@@ -78,6 +78,20 @@ selectInput(
   selected = "Todas"
 )
 
+h2("Positivos")
+sliderInput(
+  inputId ="positivos", 
+  "Casos positivos:", 1, 52000, 52000)
+
+h2("Activos")
+sliderInput(
+  inputId ="activos", 
+  "Casos activos:", 1, 7600, 7600)
+
+
+
+
+
 ```
 
 
