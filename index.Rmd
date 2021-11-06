@@ -90,6 +90,25 @@ sliderInput(
 
 
 
+ filtrarRegistros <-  reactive({
+   casos_f <-
+  casos %>%
+    dplyr::select(canton, provincia, positivos, activos)
+   
+   if (input$provincia != "Todas") {
+    fcasos_f <-
+      casos_f %>%
+      filter(provincia == input$provincia)
+   }
+   
+   if (input$canton != "Todas") {
+    fcasos_f <-
+      casos_f %>%
+      filter(canton == input$canton)
+   }
+
+  return(casos_f)
+})
 
 
 ```
@@ -102,6 +121,9 @@ Row {data-height=650}
 
 ```{r}
 
+renderLeaflet({
+  registros <-
+    filtrarRegistros()
 fallecidos_rl <- raster::raster(fallecidos)
 bins <- c(10, 100, 500, 1000, 4000, 7600)
 pal <- colorBin("YlOrBr", domain = casos$activos, bins = bins)
@@ -124,7 +146,7 @@ leaflet() %>%
             values = at,
             title = "Fallecidos") %>%
   addPolygons(
-    data = casos,
+    data = registros,
     color = "black",
     fillColor = ~ pal(activos),
     fillOpacity = 1,
@@ -147,7 +169,7 @@ leaflet() %>%
     title = "Casos Activos"
   ) %>%
   addPolygons(
-    data = casos,
+    data = registros,
     color = "black",
     fillColor = ~ pal3(positivos),
     fillOpacity = 1,
@@ -182,6 +204,8 @@ leaflet() %>%
   addControlGPS() %>%
   addSearchOSM() %>% 
   addMouseCoordinates()
+
+})
 
 ```
 Row {data-height=350}
