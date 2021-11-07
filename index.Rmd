@@ -24,29 +24,43 @@ library(leafem)
 ```
 
 ```{r datos , warning=FALSE, message=FALSE}
+
 casos <-
-  st_read("/vsicurl/https://marcelocubero.github.io/capas_proyecto/casos.geojson",
+    st_read("/vsicurl/https://marcelocubero.github.io/capas_proyecto/casos.geojson",
           quiet = TRUE)
-casos <-
+ casos <-
   casos %>%
   st_transform(4326)
 
-casos_ <-
-  read.csv(file = "https://marcelocubero.github.io/capas_proyecto/casos_.csv",
-           sep = ",",
-           encoding = "UTF-8")
+
+casos_p <-
+  st_read("/vsicurl/https://marcelocubero.github.io/capas_proyecto/casos_puntos_wgs.csv", 
+      options = c(
+      "X_POSSIBLE_NAMES=X",
+      "Y_POSSIBLE_NAMES=Y",
+      encoding = "UTF-8"
+    ),
+    quiet = TRUE
+  )
+st_crs(casos_p) <- 4326
+
+
+# casos_ <-
+ # read.csv(file = "https://marcelocubero.github.io/capas_proyecto/casos_.csv",
+  #         sep = ",",
+   #        encoding = "UTF-8")
 
 
 fallecidos <-
   rast("/vsicurl/https://marcelocubero.github.io/capas_proyecto/fallecidos.tif")
 
 
-lista_provincias <- unique(casos$provincia)
+lista_provincias <- unique(casos_p$provincia)
 lista_provincias <- sort(lista_provincias)
 lista_provincias <- c("Todas", lista_provincias)
 
 
-lista_canton <- unique(casos$canton)
+lista_canton <- unique(casos_p$canton)
 lista_canton <- sort(lista_canton)
 lista_canton <- c("Todas", lista_canton)
 ```
@@ -54,7 +68,7 @@ lista_canton <- c("Todas", lista_canton)
 
 
 
-Mapa y cuadro de datos
+Mapa
 =====================================
 
 Column {.sidebar}
@@ -92,17 +106,17 @@ sliderInput(
 
  filtrarRegistros <-  reactive({
    casos_f <-
-  casos %>%
+  casos_p %>%
     dplyr::select(canton, provincia, positivos, activos)
    
    if (input$provincia != "Todas") {
-    fcasos_f <-
+    casos_f <-
       casos_f %>%
       filter(provincia == input$provincia)
    }
    
    if (input$canton != "Todas") {
-    fcasos_f <-
+    casos_f <-
       casos_f %>%
       filter(canton == input$canton)
    }
@@ -121,9 +135,6 @@ Row {data-height=650}
 
 ```{r}
 
-renderLeaflet({
-  registros <-
-    filtrarRegistros()
 fallecidos_rl <- raster::raster(fallecidos)
 bins <- c(10, 100, 500, 1000, 4000, 7600)
 pal <- colorBin("YlOrBr", domain = casos$activos, bins = bins)
@@ -132,6 +143,10 @@ pal3 <- colorBin("Reds", domain = casos$positivos, bins = bins3)
 at <- seq(1:800)
 pal2 <- colorBin('Accent', domain = at , na.color = "transparent")
 
+
+renderLeaflet({
+  registros <-
+    filtrarRegistros()
 
 leaflet() %>%
   addTiles(group = "OSM") %>%
@@ -146,7 +161,7 @@ leaflet() %>%
             values = at,
             title = "Fallecidos") %>%
   addPolygons(
-    data = registros,
+    data = casos,
     color = "black",
     fillColor = ~ pal(activos),
     fillOpacity = 1,
@@ -169,7 +184,7 @@ leaflet() %>%
     title = "Casos Activos"
   ) %>%
   addPolygons(
-    data = registros,
+    data = casos,
     color = "black",
     fillColor = ~ pal3(positivos),
     fillOpacity = 1,
@@ -191,6 +206,13 @@ leaflet() %>%
     opacity = 1,
     title = "Casos Positivos"
   ) %>%
+  addCircleMarkers(
+    data= registros, 
+    stroke = TRUE,
+      radius = 4,
+      fillColor = 'red',
+      fillOpacity = 1
+  ) %>%
   addLayersControl(
     "bottomleft",
     baseGroups = c("OSM", "NatGeo", "CartoDB-Black"),
@@ -208,17 +230,23 @@ leaflet() %>%
 })
 
 ```
+
+
+Cuadro {data-orientation=rows}
+===================================== 
+
 Row {data-height=350}
 -------------------------------------
 ### Casos activos y positivos por cantón y provincia
 
 ```{r}
-
-casos_ %>%
+casos_p %>%
+  st_drop_geometry() %>%
   select(Cantón= canton,Provincia= provincia, Casos_Activos= activos, Casos_Positivos= positivos) %>%
-  datatable( casos_)
-
+datatable(options = list(
+  language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')))
 ```
+
 Casos positivos por cantón {data-orientation=rows}
 ===================================== 
 Row {data-height=650}
@@ -226,7 +254,7 @@ Row {data-height=650}
 
 ### Casos positivos por cantón
 ```{r}
-ggplot(casos_, aes(x = canton, y = positivos)) +
+ggplot(casos_p, aes(x = canton, y = positivos)) +
   geom_col(width = 0.5, fill = "Red") +
   ggtitle("Casos Positivos por cantón") +
   xlab("Cantón") +
@@ -252,7 +280,7 @@ Row {data-height=650}
 
 
 
-ggplot(casos_, aes(x = canton, y = activos)) +
+ggplot(casos_p, aes(x = canton, y = activos)) +
   geom_col(width = 0.5, fill = "Brown") +
   ggtitle("Casos Activos por cantón") +
   xlab("Cantón") +
@@ -266,6 +294,10 @@ ggplot(casos_, aes(x = canton, y = activos)) +
       hjust = 1
     )
   )
+
+
+
+
 ```
 
 
