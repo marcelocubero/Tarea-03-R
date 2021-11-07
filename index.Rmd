@@ -208,15 +208,16 @@ leaflet() %>%
   ) %>%
   addCircleMarkers(
     data= registros, 
-    stroke = TRUE,
+    stroke = F,
       radius = 4,
-      fillColor = 'red',
-      fillOpacity = 1
+      fillColor = '#008000',
+      fillOpacity = 1,
+    group= "Casos Puntos"
   ) %>%
   addLayersControl(
     "bottomleft",
     baseGroups = c("OSM", "NatGeo", "CartoDB-Black"),
-    overlayGroups = c("Fallecidos", "Casos Activos", "Casos Positivos"),
+    overlayGroups = c("Fallecidos", "Casos Activos", "Casos Positivos", "Casos Puntos"),
     options = layersControlOptions(collapsed = TRUE)
   ) %>%
   addScaleBar("bottomright") %>%
@@ -240,11 +241,21 @@ Row {data-height=350}
 ### Casos activos y positivos por cantón y provincia
 
 ```{r}
-casos_p %>%
+
+
+renderDT({
+  registros <- filtrarRegistros()
+  
+  registros %>%
   st_drop_geometry() %>%
   select(Cantón= canton,Provincia= provincia, Casos_Activos= activos, Casos_Positivos= positivos) %>%
 datatable(options = list(
   language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')))
+
+
+})
+
+
 ```
 
 Casos positivos por cantón {data-orientation=rows}
@@ -254,7 +265,12 @@ Row {data-height=650}
 
 ### Casos positivos por cantón
 ```{r}
-ggplot(casos_p, aes(x = canton, y = positivos)) +
+renderPlotly({
+  registros <- filtrarRegistros()
+  registros %>%
+    st_drop_geometry() %>%
+
+ggplot( aes(x = canton, y = positivos)) +
   geom_col(width = 0.5, fill = "Red") +
   ggtitle("Casos Positivos por cantón") +
   xlab("Cantón") +
@@ -268,6 +284,8 @@ ggplot(casos_p, aes(x = canton, y = positivos)) +
       hjust = 1
     )
   ) 
+
+})
 ```
 
 Casos activos por cantón {data-orientation=rows}
@@ -278,9 +296,12 @@ Row {data-height=650}
 
 ```{r}
 
+renderPlotly({
+  registros <- filtrarRegistros()
+  registros %>%
+    st_drop_geometry() %>%
 
-
-ggplot(casos_p, aes(x = canton, y = activos)) +
+ggplot( aes(x = canton, y = activos)) +
   geom_col(width = 0.5, fill = "Brown") +
   ggtitle("Casos Activos por cantón") +
   xlab("Cantón") +
@@ -295,7 +316,7 @@ ggplot(casos_p, aes(x = canton, y = activos)) +
     )
   )
 
-
+})
 
 
 ```
